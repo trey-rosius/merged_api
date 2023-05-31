@@ -1,0 +1,11 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "sam-app"
+resolve_s3 = true
+s3_prefix = "sam-app"
+region = "us-east-1"
+profile = "educloud"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "ClientDomain=\"https:my.carapp.com\" Env=\"dev\" TechStack=\"graphql\""
+image_repositories = []

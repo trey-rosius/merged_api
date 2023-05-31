@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  car-app
+Transform:
+- AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 128
+    Runtime: python3.9
+    CodeUri: src/
+    Tracing: Active
+    Environment:
+      Variables:
+        POWERTOOLS_SERVICE_NAME: ecom-app
+        LOG_LEVEL: INFO
+        POWERTOOLS_METRICS_NAMESPACE: ecom-app-metric
+
+  Api:
+    TracingEnabled: True
+
+Parameters:
+  Client:
+    Description: Client website for authentication redirects and cors (must start with https://)
+    Type: String
+    Default: https://myapp.com
+  ClientDomain:
+    Type: String
+    Description: Domain allowed to use this UserPool
+  Env:
+    Type: String
+    Description: Environnement name
+    Default: dev
+  TechStack:
+    Type: String
+    Description: Framework used or resource used.
+    Default: graphql
+
+
+Resources:
+
+  UserPool:
+    Type: AWS::Cognito::UserPool 
+    Properties:
+      UserPoolName: !Sub userpool-${TechStack}-${Env}
+      Policies: 
+        PasswordPolicy: 
+          MinimumLength: 8
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes: 
+        - email
+      Schema: 
+        - AttributeDataType: String 
+          Name: email 
+          Required: false
+      LambdaConfig:
+        PostConfirmation: !GetAtt SubscribeUserLambdaFunction.Arn
+  
+  MyLambdaInvocationPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !GetAtt SubscribeUserLambdaFunction.Arn
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt UserPool.Arn
+
+
+  # Create an application for authentication
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient 
+    Properties: 
+      ClientName: !Sub userpool-${TechStack}-${Env}
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      SupportedIdentityProviders:
+        - COGNITO
+      CallbackURLs:
+        - !Ref ClientDomain
+      LogoutURLs:
+        - !Ref ClientDomain
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+  
+    # Create a hosted domain for users to signup and login
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties: 
+      Domain: graphqlauth
+      UserPoolId: !Ref UserPool
+
+
+
+Outputs:
+  WebEndpoint:
+    Description: API Gateway endpoint URL for Prod stage
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+# # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Tracing: Active
+  Api:
+    TracingEnabled: true
