@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'python-ecom-app
+
+  Sample SAM Template for python-ecom-app
+
+  '
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 128
+    Runtime: modejs16.x
+    CodeUri: src/
+    Tracing: Active
+    Environment:
+      Variables:
+        POWERTOOLS_SERVICE_NAME: car-app
+        LOG_LEVEL: INFO
+        POWERTOOLS_METRICS_NAMESPACE: car-app-metric
+  Api:
+    TracingEnabled: true
+Parameters:
+  Env:
+    Type: String
+    Description: Environnement name
+    Default: dev
+  TechStack:
+    Type: String
+    Description: Framework used or resource used.
+    Default: graphql
+  UserPoolId:
+    Type: String
+    Description: User pool Id
+  UserPoolIdRegion:
+    Type: String
+    Description: User pool id region
+Resources:
+  AppSyncServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - appsync.amazonaws.com
+          Action:
+          - sts:AssumeRole
+  CarApi:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      Name: CarApi
+      AuthenticationType: API_KEY
+      AdditionalAuthenticationProviders:
+      - AuthenticationType: AMAZON_COGNITO_USER_POOLS
+        UserPoolConfig:
+          UserPoolId:
+            Ref: UserPoolId
+          AwsRegion:
+            Ref: UserPoolIdRegion
+      XrayEnabled: true
+  CarApiKey:
+    Type: AWS::AppSync::ApiKey
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+  CarApiSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      DefinitionS3Location: ../../schema.graphql
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+          - W3002
+  CarTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: Car-${TechStack}-${Env}
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  CreateCarResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      TypeName: Query
+      FieldName: getAlCars
+      Kind: PIPELINE
+      PipelineConfig:
+        Functions:
+        - ./src/handlers/put-item.mjs

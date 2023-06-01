@@ -1,0 +1,56 @@
+schema {
+    query: Query
+    # mutation: Mutation
+}
+
+
+type Query {
+    # these are fields you can attach resolvers to (field: Query, field: getTodo)
+    getCar(id: ID!): Car
+    getAllCars: [Car]
+}
+
+# type Mutation {
+
+#     createCar(input: CarInput): Car
+#     @aws_cognito_user_pools
+
+#     updateCar(input: CarUpdate): Car
+#     @aws_cognito_user_pools
+
+#     # deleteCar(input: {id: ID!}): id
+#     # @aws_cognito_user_pools
+
+# }
+
+type Car {
+    id: ID
+    height: Float
+    width: Float
+    price: Float
+    image_uri: String
+    length: Float 
+    description: String
+    ownerId: String
+}
+
+# input CarInput @aws_cognito_user_pools {
+#     height: Float!
+#     width: Float!
+#     price: Float!
+#     image_uri: String!
+#     length: Float!
+#     description: String!
+#     ownerId: String!
+# }
+
+# input CarUpdate @aws_cognito_user_pools {
+#     id: ID!
+#     height: Float
+#     width: Float
+#     price: Float
+#     image_uri: String
+#     length: Float
+#     description: String
+#     ownerId: String!
+# }

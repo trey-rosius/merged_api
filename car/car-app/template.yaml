@@ -1,33 +1,28 @@
-AWSTemplateFormatVersion: 2010-09-09
-Description: >-
-  car-app
-Transform:
-- AWS::Serverless-2016-10-31
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  python-ecom-app
 
+  Sample SAM Template for python-ecom-app
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 30
     MemorySize: 128
-    Runtime: python3.9
+    Runtime: modejs16.x
     CodeUri: src/
     Tracing: Active
     Environment:
       Variables:
-        POWERTOOLS_SERVICE_NAME: ecom-app
+        POWERTOOLS_SERVICE_NAME: car-app
         LOG_LEVEL: INFO
-        POWERTOOLS_METRICS_NAMESPACE: ecom-app-metric
+        POWERTOOLS_METRICS_NAMESPACE: car-app-metric
 
   Api:
     TracingEnabled: True
 
 Parameters:
-  Client:
-    Description: Client website for authentication redirects and cors (must start with https://)
-    Type: String
-    Default: https://myapp.com
-  ClientDomain:
-    Type: String
-    Description: Domain allowed to use this UserPool
   Env:
     Type: String
     Description: Environnement name
@@ -36,74 +31,115 @@ Parameters:
     Type: String
     Description: Framework used or resource used.
     Default: graphql
+  UserPoolId:
+    Type: String
+    Description: User pool Id
+  UserPoolIdRegion:
+    Type: String
+    Description: User pool id region
 
 
 Resources:
 
-  UserPool:
-    Type: AWS::Cognito::UserPool 
+  AppSyncServiceRole:
+    Type: "AWS::IAM::Role"
     Properties:
-      UserPoolName: !Sub userpool-${TechStack}-${Env}
-      Policies: 
-        PasswordPolicy: 
-          MinimumLength: 8
-      AutoVerifiedAttributes:
-        - email
-      UsernameAttributes: 
-        - email
-      Schema: 
-        - AttributeDataType: String 
-          Name: email 
-          Required: false
-      LambdaConfig:
-        PostConfirmation: !GetAtt SubscribeUserLambdaFunction.Arn
-  
-  MyLambdaInvocationPermission:
-    Type: AWS::Lambda::Permission
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "appsync.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+
+  CarApi:
+    Type: "AWS::AppSync::GraphQLApi"
     Properties:
-      Action: "lambda:InvokeFunction"
-      FunctionName: !GetAtt SubscribeUserLambdaFunction.Arn
-      Principal: cognito-idp.amazonaws.com
-      SourceArn: !GetAtt UserPool.Arn
+      Name: CarApi
+      AuthenticationType: "API_KEY"
+      AdditionalAuthenticationProviders:
+        - AuthenticationType: "AMAZON_COGNITO_USER_POOLS"
+          UserPoolConfig:
+            UserPoolId: !Ref UserPoolId
+            AwsRegion: !Ref UserPoolIdRegion
+      XrayEnabled: true
 
+  CarApiKey:
+    Type: AWS::AppSync::ApiKey
+    Properties:
+      ApiId: !GetAtt CarApi.ApiId
 
-  # Create an application for authentication
-  UserPoolClient:
-    Type: AWS::Cognito::UserPoolClient 
-    Properties: 
-      ClientName: !Sub userpool-${TechStack}-${Env}
-      UserPoolId: !Ref UserPool
-      GenerateSecret: false
-      SupportedIdentityProviders:
-        - COGNITO
-      CallbackURLs:
-        - !Ref ClientDomain
-      LogoutURLs:
-        - !Ref ClientDomain
-      AllowedOAuthFlowsUserPoolClient: true
-      AllowedOAuthFlows:
-        - implicit
-      AllowedOAuthScopes:
-        - email
-        - openid
-        - profile
-  
-    # Create a hosted domain for users to signup and login
-  UserPoolDomain:
-    Type: AWS::Cognito::UserPoolDomain
-    Properties: 
-      Domain: graphqlauth
-      UserPoolId: !Ref UserPool
+  CarApiSchema:
+    Type: "AWS::AppSync::GraphQLSchema"
+    Properties:
+      ApiId: !GetAtt CarApi.ApiId
+      DefinitionS3Location: ./schema.graphql
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3002  # allow relative path in DefinitionS3Location
 
+  CarTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub Car-${TechStack}-${Env}
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE  
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+           
 
+  # OrderDataSource:
+  #   Type: "AWS::AppSync::DataSource"
+  #   Properties:
+  #     ApiId: !GetAtt CarApi.ApiId
+  #     Name: "CarDatascource"
+  #     Type: "AMAZON_DYNAMODB"
+  #     ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+  #     DynamoDBConfig:
+  #       AwsRegion: !Ref "AWS::Region" 
+  #       TableName: !Ref CarTable
 
-Outputs:
-  WebEndpoint:
-    Description: API Gateway endpoint URL for Prod stage
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-# # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Tracing: Active
-  Api:
-    TracingEnabled: true
+  CreateCarResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt CarApi.ApiId
+      TypeName: "Query"
+      FieldName: "getAlCars"
+      Kind: PIPELINE
+      PipelineConfig:
+        Functions: 
+          - "./src/handlers/put-item.mjs"
+
+  # ListCarResolver:
+  #   Type: "AWS::AppSync::Resolver"
+  #   Properties:
+  #     ApiId: !GetAtt TodosApi.ApiId
+  #     TypeName: "Query"
+  #     FieldName: "listProduct"
+  #     DataSourceName: !GetAtt ProductFunctionDataSource.Name
+
+  # GetCarResolver:
+  #   Type: "AWS::AppSync::Resolver"
+  #   Properties:
+  #     ApiId: !GetAtt TodosApi.ApiId
+  #     TypeName: "Query"
+  #     FieldName: "getProduct"
+  #     DataSourceName: !GetAtt ProductFunctionDataSource.Name
+                 
+# Outputs:
+#   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+#   # Find out more about other implicit resources you can reference within SAM
+#   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+
