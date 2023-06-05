@@ -1,6 +1,6 @@
 schema {
     query: Query
-    # mutation: Mutation
+    mutation: Mutation
 }
 
 
@@ -10,20 +10,20 @@ type Query {
     getAllCars: [Car]
 }
 
-# type Mutation {
+type Mutation {
 
-#     createCar(input: CarInput): Car
-#     @aws_cognito_user_pools
+    createCar(input: CarInput): Car
+    @aws_cognito_user_pools
 
-#     updateCar(input: CarUpdate): Car
-#     @aws_cognito_user_pools
+    updateCar(input: CarUpdate): Car
+    @aws_cognito_user_pools
 
-#     # deleteCar(input: {id: ID!}): id
-#     # @aws_cognito_user_pools
+    deleteCar(id: String!): String
+    @aws_cognito_user_pools
 
-# }
+}
 
-type Car {
+type Car @aws_cognito_user_pools {
     id: ID
     height: Float
     width: Float
@@ -34,23 +34,24 @@ type Car {
     ownerId: String
 }
 
-# input CarInput @aws_cognito_user_pools {
-#     height: Float!
-#     width: Float!
-#     price: Float!
-#     image_uri: String!
-#     length: Float!
-#     description: String!
-#     ownerId: String!
-# }
+input CarInput @aws_cognito_user_pools {
+    id: ID!
+    height: Float!
+    width: Float!
+    price: Float!
+    image_uri: String!
+    length: Float!
+    description: String!
+    ownerId: String!
+}
 
-# input CarUpdate @aws_cognito_user_pools {
-#     id: ID!
-#     height: Float
-#     width: Float
-#     price: Float
-#     image_uri: String
-#     length: Float
-#     description: String
-#     ownerId: String!
-# }
+input CarUpdate @aws_cognito_user_pools {
+    id: ID!
+    height: Float
+    width: Float
+    price: Float
+    image_uri: String
+    length: Float
+    description: String
+    ownerId: String!
+}

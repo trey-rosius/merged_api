@@ -1,8 +1,8 @@
 import { util } from '@aws-appsync/utils';
 
 export function request(ctx) {
-  const { id, ...values } = ctx.args.input;
-  return dynamodbPutRequest({ key: {id}, values });
+  const { id } = ctx.arguments;
+  return dynamodbDeleteRequest({ key: {id} });
 }
 
 export function response(ctx) {
@@ -13,10 +13,9 @@ export function response(ctx) {
  * Helper function to create a new item
  * @returns a PutItem request
  */
-function dynamodbPutRequest({key, values}) {
+function dynamodbDeleteRequest({key}) {
   return {
-    operation: 'PutItem',
+    operation: 'DeleteItem',
     key: util.dynamodb.toMapValues(key),
-    attributeValues: util.dynamodb.toMapValues(values),
   };
 }

@@ -96,6 +96,114 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
+  CarDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      Name: CarDatascource
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn:
+        Fn::GetAtt:
+        - AppSyncServiceRole
+        - Arn
+      DynamoDBConfig:
+        AwsRegion:
+          Ref: AWS::Region
+        TableName:
+          Ref: CarTable
+  CreateCarFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      CodeS3Location: ../../src/handlers/put-item.mjs
+      DataSourceName:
+        Fn::GetAtt:
+        - CarDataSource
+        - Name
+      Description: Creata a car
+      FunctionVersion: '2018-05-29'
+      Name: createcar
+      Runtime:
+        Name: APPSYNC_JS
+        RuntimeVersion: 1.0.0
+  UpdateCarFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      CodeS3Location: ../../src/handlers/update-item.mjs
+      DataSourceName:
+        Fn::GetAtt:
+        - CarDataSource
+        - Name
+      Description: Update a car
+      FunctionVersion: '2018-05-29'
+      Name: updatecar
+      Runtime:
+        Name: APPSYNC_JS
+        RuntimeVersion: 1.0.0
+  GetCarFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      CodeS3Location: ../../src/handlers/get-by-id.mjs
+      DataSourceName:
+        Fn::GetAtt:
+        - CarDataSource
+        - Name
+      Description: Get by id a car
+      FunctionVersion: '2018-05-29'
+      Name: getcar
+      Runtime:
+        Name: APPSYNC_JS
+        RuntimeVersion: 1.0.0
+  ListCarFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      CodeS3Location: ../../src/handlers/get-all-items.mjs
+      DataSourceName:
+        Fn::GetAtt:
+        - CarDataSource
+        - Name
+      Description: Get all cars
+      FunctionVersion: '2018-05-29'
+      Name: listcar
+      Runtime:
+        Name: APPSYNC_JS
+        RuntimeVersion: 1.0.0
+  DeleteCarFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      CodeS3Location: ../../src/handlers/delete-item.mjs
+      DataSourceName:
+        Fn::GetAtt:
+        - CarDataSource
+        - Name
+      Description: Delete car
+      FunctionVersion: '2018-05-29'
+      Name: deletecar
+      Runtime:
+        Name: APPSYNC_JS
+        RuntimeVersion: 1.0.0
   CreateCarResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -103,9 +211,96 @@ Resources:
         Fn::GetAtt:
         - CarApi
         - ApiId
-      TypeName: Query
-      FieldName: getAlCars
+      TypeName: Mutation
+      FieldName: createCar
       Kind: PIPELINE
       PipelineConfig:
         Functions:
-        - ./src/handlers/put-item.mjs
+        - Fn::GetAtt:
+          - CreateCarFunction
+          - FunctionId
+      RequestMappingTemplate: '{}'
+      ResponseMappingTemplate: $util.toJson($context.result)
+  UpdateCarResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      TypeName: Mutation
+      FieldName: updateCar
+      Kind: PIPELINE
+      PipelineConfig:
+        Functions:
+        - Fn::GetAtt:
+          - UpdateCarFunction
+          - FunctionId
+      RequestMappingTemplate: '{}'
+      ResponseMappingTemplate: $util.toJson($context.result)
+  GetCarResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      TypeName: Query
+      FieldName: getCar
+      Kind: PIPELINE
+      PipelineConfig:
+        Functions:
+        - Fn::GetAtt:
+          - GetCarFunction
+          - FunctionId
+      RequestMappingTemplate: '{}'
+      ResponseMappingTemplate: $util.toJson($context.result)
+  ListCarResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      TypeName: Query
+      FieldName: getAllCars
+      Kind: PIPELINE
+      PipelineConfig:
+        Functions:
+        - Fn::GetAtt:
+          - ListCarFunction
+          - FunctionId
+      RequestMappingTemplate: '{}'
+      ResponseMappingTemplate: $util.toJson($context.result)
+  DeleteCarResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      TypeName: Mutation
+      FieldName: deleteCar
+      Kind: PIPELINE
+      PipelineConfig:
+        Functions:
+        - Fn::GetAtt:
+          - DeleteCarFunction
+          - FunctionId
+      RequestMappingTemplate: '{}'
+      ResponseMappingTemplate: $util.toJson($context.result)
+  DynamoDBPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: DirectAppSyncLambda
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: dynamodb:*
+          Resource:
+          - Fn::GetAtt:
+            - CarTable
+            - Arn
+      Roles:
+      - Ref: AppSyncServiceRole
