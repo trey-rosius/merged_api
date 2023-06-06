@@ -7,7 +7,14 @@ schema {
 type Query {
     # these are fields you can attach resolvers to (field: Query, field: getTodo)
     getCar(id: ID!): Car
+    @aws_api_key @aws_cognito_user_pools
+
     getAllCars: [Car]
+    @aws_api_key @aws_cognito_user_pools
+
+    getCarByRent(id: ID!): Car
+    @aws_api_key @aws_cognito_user_pools
+
 }
 
 type Mutation {
@@ -23,7 +30,7 @@ type Mutation {
 
 }
 
-type Car @aws_cognito_user_pools {
+type Car @aws_cognito_user_pools @aws_api_key {
     id: ID
     height: Float
     width: Float
@@ -32,6 +39,11 @@ type Car @aws_cognito_user_pools {
     length: Float 
     description: String
     ownerId: String
+}
+
+type Rent @aws_cognito_user_pools @aws_api_key {
+    id: ID
+    car: Car
 }
 
 input CarInput @aws_cognito_user_pools {

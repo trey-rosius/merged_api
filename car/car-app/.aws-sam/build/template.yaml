@@ -204,6 +204,24 @@ Resources:
       Runtime:
         Name: APPSYNC_JS
         RuntimeVersion: 1.0.0
+  GetCarByRentFunction:
+    Type: AWS::AppSync::FunctionConfiguration
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      CodeS3Location: ../../src/handlers/get-car-by-rent.mjs
+      DataSourceName:
+        Fn::GetAtt:
+        - CarDataSource
+        - Name
+      Description: Get car by rent
+      FunctionVersion: '2018-05-29'
+      Name: getcarbyrent
+      Runtime:
+        Name: APPSYNC_JS
+        RuntimeVersion: 1.0.0
   CreateCarResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -286,6 +304,23 @@ Resources:
         Functions:
         - Fn::GetAtt:
           - DeleteCarFunction
+          - FunctionId
+      RequestMappingTemplate: '{}'
+      ResponseMappingTemplate: $util.toJson($context.result)
+  GetCarByRentResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId:
+        Fn::GetAtt:
+        - CarApi
+        - ApiId
+      TypeName: Query
+      FieldName: getCarByRent
+      Kind: PIPELINE
+      PipelineConfig:
+        Functions:
+        - Fn::GetAtt:
+          - GetCarByRentFunction
           - FunctionId
       RequestMappingTemplate: '{}'
       ResponseMappingTemplate: $util.toJson($context.result)

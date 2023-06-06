@@ -1,0 +1,53 @@
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+
+type Query {
+    # these are fields you can attach resolvers to (field: Query, field: getTodo)
+    getRent(id: ID!): Rent
+    @aws_api_key @aws_cognito_user_pools
+
+    getAllRents: [Rent]
+    @aws_api_key @aws_cognito_user_pools
+
+}
+
+type Mutation {
+
+    createRent(input: RentInput): Rent
+    @aws_cognito_user_pools
+
+    updateRent(input: RentUpdate): Rent
+    @aws_cognito_user_pools
+
+    deleteRent(id: String!): String
+    @aws_cognito_user_pools
+
+}
+
+type Rent @aws_cognito_user_pools @aws_api_key {
+    id: ID
+    rentDate: AWSDate
+    dueDate: AWSDate
+    carId: String
+    ownerId: String
+}
+
+
+input RentInput @aws_cognito_user_pools {
+    id: ID!
+    rentDate: AWSDate!
+    dueDate: AWSDate!
+    carId: String!
+    ownerId: String!
+}
+
+input RentUpdate @aws_cognito_user_pools {
+    id: ID!
+    rentDate: AWSDate!
+    dueDate: AWSDate!
+    carId: String!
+    ownerId: String!
+}

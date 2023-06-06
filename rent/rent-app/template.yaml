@@ -10,14 +10,14 @@ Globals:
   Function:
     Timeout: 30
     MemorySize: 128
-    Runtime: modejs16.x
+    Runtime: nodejs16.x
     CodeUri: src/
     Tracing: Active
     Environment:
       Variables:
-        POWERTOOLS_SERVICE_NAME: car-app
+        POWERTOOLS_SERVICE_NAME: rent-app
         LOG_LEVEL: INFO
-        POWERTOOLS_METRICS_NAMESPACE: car-app-metric
+        POWERTOOLS_METRICS_NAMESPACE: rent-app-metric
 
   Api:
     TracingEnabled: True
@@ -55,10 +55,10 @@ Resources:
               - "sts:AssumeRole"
 
 
-  CarApi:
+  RentApi:
     Type: "AWS::AppSync::GraphQLApi"
     Properties:
-      Name: CarApi
+      Name: RentApi
       AuthenticationType: "API_KEY"
       AdditionalAuthenticationProviders:
         - AuthenticationType: "AMAZON_COGNITO_USER_POOLS"
@@ -67,15 +67,15 @@ Resources:
             AwsRegion: !Ref UserPoolIdRegion
       XrayEnabled: true
 
-  CarApiKey:
+  RentApiKey:
     Type: AWS::AppSync::ApiKey
     Properties:
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
 
-  CarApiSchema:
+  RentApiSchema:
     Type: "AWS::AppSync::GraphQLSchema"
     Properties:
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       DefinitionS3Location: ./schema.graphql
     Metadata:
       cfn-lint:
@@ -83,10 +83,10 @@ Resources:
           ignore_checks:
             - W3002  # allow relative path in DefinitionS3Location
 
-  CarTable:
+  RentTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub Car-${TechStack}-${Env}
+      TableName: !Sub Rent-${TechStack}-${Env}
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -100,173 +100,146 @@ Resources:
         WriteCapacityUnits: 5
            
 
-  CarDataSource:
+  RentDataSource:
     Type: "AWS::AppSync::DataSource"
     Properties:
-      ApiId: !GetAtt CarApi.ApiId
-      Name: "CarDatascource"
+      ApiId: !GetAtt RentApi.ApiId
+      Name: "RentDatascource"
       Type: "AMAZON_DYNAMODB"
       ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
       DynamoDBConfig:
         AwsRegion: !Ref "AWS::Region" 
-        TableName: !Ref CarTable
+        TableName: !Ref RentTable
 
-  CreateCarFunction:
+  CreateRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
     Properties: 
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/put-item.mjs"
-      DataSourceName: !GetAtt CarDataSource.Name
-      Description: "Creata a car"
+      DataSourceName: !GetAtt RentDataSource.Name
+      Description: "Creata a Rent"
       FunctionVersion: "2018-05-29"
-      Name: "createcar"
+      Name: "createRent"
       Runtime:
         Name: APPSYNC_JS
         RuntimeVersion: 1.0.0
   
-  UpdateCarFunction:
+  UpdateRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
     Properties: 
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/update-item.mjs"
-      DataSourceName: !GetAtt CarDataSource.Name
-      Description: "Update a car"
+      DataSourceName: !GetAtt RentDataSource.Name
+      Description: "Update a Rent"
       FunctionVersion: "2018-05-29"
-      Name: "updatecar"
+      Name: "updateRent"
       Runtime:
         Name: APPSYNC_JS
         RuntimeVersion: 1.0.0
 
-  GetCarFunction:
+  GetRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
     Properties: 
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/get-by-id.mjs"
-      DataSourceName: !GetAtt CarDataSource.Name
-      Description: "Get by id a car"
+      DataSourceName: !GetAtt RentDataSource.Name
+      Description: "Get by id a Rent"
       FunctionVersion: "2018-05-29"
-      Name: "getcar"
+      Name: "getRent"
       Runtime:
         Name: APPSYNC_JS
         RuntimeVersion: 1.0.0
 
-  ListCarFunction:
+  ListRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
     Properties: 
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/get-all-items.mjs"
-      DataSourceName: !GetAtt CarDataSource.Name
-      Description: "Get all cars"
+      DataSourceName: !GetAtt RentDataSource.Name
+      Description: "Get all Rents"
       FunctionVersion: "2018-05-29"
-      Name: "listcar"
+      Name: "listRent"
       Runtime:
         Name: APPSYNC_JS
         RuntimeVersion: 1.0.0
 
-  DeleteCarFunction:
+  DeleteRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
     Properties: 
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/delete-item.mjs"
-      DataSourceName: !GetAtt CarDataSource.Name
-      Description: "Delete car"
+      DataSourceName: !GetAtt RentDataSource.Name
+      Description: "Delete Rent"
       FunctionVersion: "2018-05-29"
-      Name: "deletecar"
+      Name: "deleteRent"
       Runtime:
         Name: APPSYNC_JS
         RuntimeVersion: 1.0.0
 
-  GetCarByRentFunction:
-    Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
-      ApiId: !GetAtt CarApi.ApiId
-      CodeS3Location: "./src/handlers/get-car-by-rent.mjs"
-      DataSourceName: !GetAtt CarDataSource.Name
-      Description: "Get car by rent"
-      FunctionVersion: "2018-05-29"
-      Name: "getcarbyrent"
-      Runtime:
-        Name: APPSYNC_JS
-        RuntimeVersion: 1.0.0
-
-  CreateCarResolver:
+  CreateRentResolver:
     Type: "AWS::AppSync::Resolver"
     Properties:
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       TypeName: "Mutation"
-      FieldName: "createCar"
+      FieldName: "createRent"
       Kind: PIPELINE
       PipelineConfig:
         Functions: 
-        - !GetAtt CreateCarFunction.FunctionId
+        - !GetAtt CreateRentFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
 
-  UpdateCarResolver:
+  UpdateRentResolver:
     Type: "AWS::AppSync::Resolver"
     Properties:
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       TypeName: "Mutation"
-      FieldName: "updateCar"
+      FieldName: "updateRent"
       Kind: PIPELINE
       PipelineConfig:
         Functions: 
-        - !GetAtt UpdateCarFunction.FunctionId
+        - !GetAtt UpdateRentFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
 
-  GetCarResolver:
+  GetRentResolver:
     Type: "AWS::AppSync::Resolver"
     Properties:
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       TypeName: "Query"
-      FieldName: "getCar"
+      FieldName: "getRent"
       Kind: PIPELINE
       PipelineConfig:
         Functions: 
-        - !GetAtt GetCarFunction.FunctionId
+        - !GetAtt GetRentFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
 
-  ListCarResolver:
+  ListRentResolver:
     Type: "AWS::AppSync::Resolver"
     Properties:
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       TypeName: "Query"
-      FieldName: "getAllCars"
+      FieldName: "getAllRents"
       Kind: PIPELINE
       PipelineConfig:
         Functions: 
-        - !GetAtt ListCarFunction.FunctionId
+        - !GetAtt ListRentFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
 
-  DeleteCarResolver:
+  DeleteRentResolver:
     Type: "AWS::AppSync::Resolver"
     Properties:
-      ApiId: !GetAtt CarApi.ApiId
+      ApiId: !GetAtt RentApi.ApiId
       TypeName: "Mutation"
-      FieldName: "deleteCar"
+      FieldName: "deleteRent"
       Kind: PIPELINE
       PipelineConfig:
         Functions: 
-        - !GetAtt DeleteCarFunction.FunctionId
+        - !GetAtt DeleteRentFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
-
-  GetCarByRentResolver:
-    Type: "AWS::AppSync::Resolver"
-    Properties:
-      ApiId: !GetAtt CarApi.ApiId
-      TypeName: "Query"
-      FieldName: "getCarByRent"
-      Kind: PIPELINE
-      PipelineConfig:
-        Functions: 
-        - !GetAtt GetCarByRentFunction.FunctionId
-      RequestMappingTemplate: "{}"
-      ResponseMappingTemplate: "$util.toJson($context.result)"
-
 
   DynamoDBPolicy:
     Type: "AWS::IAM::Policy"
@@ -278,7 +251,7 @@ Resources:
           - Effect: "Allow"
             Action: "dynamodb:*"
             Resource:
-              - !GetAtt CarTable.Arn
+              - !GetAtt RentTable.Arn
       Roles:
         - !Ref AppSyncServiceRole
 

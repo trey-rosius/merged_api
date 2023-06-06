@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  merged-api
+
+  Sample SAM Template for merged-api
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+
+Parameters:
+  CarApiId:
+    Type: String
+    Description: Car appsync Api Id
+  RentApiId:
+    Type: String
+    Description: Rent appsync Api Id
+  UserPoolId:
+    Type: String
+    Description: User pool Id
+  UserPoolIdRegion:
+    Type: String
+    Description: User pool id region
+
+Resources:
+
+  AppSyncServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "appsync.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+      - PolicyName: MergedAPiPermission
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'appsync:AssociateSourceGraphqlApi'
+                - 'appsync:StartSchemaMerge'
+                - 'appsync:SourceGraphQL'
+              Resource: "*"
+
+
+
+  MergeAppSyncApi:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      ApiType: MERGED
+      AuthenticationType: API_KEY
+      MergedApiExecutionRoleArn: !GetAtt AppSyncServiceRole.Arn
+      AdditionalAuthenticationProviders:
+        - AuthenticationType: "AMAZON_COGNITO_USER_POOLS"
+          UserPoolConfig:
+            UserPoolId: !Ref UserPoolId
+            AwsRegion: !Ref UserPoolIdRegion
+      Name: MergeCarApi
+      XrayEnabled: true
+
+  MergedApiKey:
+    Type: AWS::AppSync::ApiKey
+    Properties:
+      ApiId: !GetAtt MergeAppSyncApi.ApiId
+
+
+  CarAPIAssociation:
+    Type: AWS::AppSync::SourceApiAssociation
+    Properties: 
+      Description: Car api association
+      MergedApiIdentifier: !GetAtt MergeAppSyncApi.ApiId
+      SourceApiAssociationConfig: 
+        MergeType: AUTO_MERGE
+      SourceApiIdentifier: !Ref CarApiId
+
+  RentAPIAssociation:
+    Type: AWS::AppSync::SourceApiAssociation
+    Properties: 
+      Description: Rent api association
+      MergedApiIdentifier: !GetAtt MergeAppSyncApi.ApiId
+      SourceApiAssociationConfig: 
+        MergeType: AUTO_MERGE
+      SourceApiIdentifier: !Ref RentApiId
+
+
+# Outputs:
+#   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+#   # Find out more about other implicit resources you can reference within SAM
+#   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
