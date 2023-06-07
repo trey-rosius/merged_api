@@ -5,12 +5,6 @@ Description: >
 
   Sample SAM Template for merged-api
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Timeout: 3
-    MemorySize: 128
-
 Parameters:
   CarApiId:
     Type: String
@@ -52,7 +46,6 @@ Resources:
               Resource: "*"
 
 
-
   MergeAppSyncApi:
     Type: AWS::AppSync::GraphQLApi
     Properties:
@@ -92,7 +85,10 @@ Resources:
       SourceApiIdentifier: !Ref RentApiId
 
 
-# Outputs:
-#   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-#   # Find out more about other implicit resources you can reference within SAM
-#   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+Outputs:
+  GraphQLApiEndpoint:
+    Description: The URL to the GraphQL Endpoint
+    Value: !GetAtt MergeAppSyncApi.GraphQLUrl
+  APIKey:
+    Description: API Key for using the GraphQL endpoint. (header key name 'x-api-key')
+    Value: !GetAtt MergedApiKey.ApiKey
