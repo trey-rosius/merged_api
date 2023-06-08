@@ -9,10 +9,7 @@ export function response(ctx) {
   return ctx.result;
 }
 
-/**
- * Helper function to create a new item
- * @returns a PutItem request
- */
+
 function dynamodbDeleteRequest({key}) {
   return {
     operation: 'DeleteItem',

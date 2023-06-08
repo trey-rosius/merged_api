@@ -9,10 +9,6 @@ export function response(ctx) {
   return ctx.result;
 }
 
-/**
- * Helper function to create a new item
- * @returns a PutItem request
- */
 function dynamodbPutRequest({key, values}) {
   return {
     operation: 'PutItem',

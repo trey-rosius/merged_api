@@ -1,24 +1,8 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  car-app
+  auth-app
 Transform:
 - AWS::Serverless-2016-10-31
-
-Globals:
-  Function:
-    Timeout: 30
-    MemorySize: 128
-    Runtime: nodejs16.x
-    CodeUri: src/
-    Tracing: Active
-    Environment:
-      Variables:
-        POWERTOOLS_SERVICE_NAME: ecom-app
-        LOG_LEVEL: INFO
-        POWERTOOLS_METRICS_NAMESPACE: ecom-app-metric
-
-  Api:
-    TracingEnabled: True
 
 Parameters:
   ClientDomain:
@@ -103,8 +87,19 @@ Resources:
 
 
 
-# Outputs:
-#   WebEndpoint:
-#     Description: API Gateway endpoint URL for Prod stage
-#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-# # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Outputs:
+  UserPoolId:
+    Description: "User pool ID"
+    Value: !Ref UserPool
+
+  UserPoolClientId:
+    Description: "Application client ID"
+    Value: !Ref UserPoolClient
+
+  AuthUrl:
+    Description: "URL used for authentication"
+    Value: !Sub https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login
+    
+  Issuer:
+    Description: "Url used for issuer on HTTP API JWT tokens"
+    Value: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}

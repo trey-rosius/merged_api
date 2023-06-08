@@ -8,10 +8,7 @@ export function response(ctx) {
   return ctx.result.items;
 }
 
-/**
- * Helper function to create a new item
- * @returns a PutItem request
- */
+
 function dynamodbGetRequest() {
   return {
     operation: 'Scan',

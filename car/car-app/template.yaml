@@ -7,17 +7,6 @@ Description: >
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
-  Function:
-    Timeout: 30
-    MemorySize: 128
-    Runtime: modejs16.x
-    CodeUri: src/
-    Tracing: Active
-    Environment:
-      Variables:
-        POWERTOOLS_SERVICE_NAME: car-app
-        LOG_LEVEL: INFO
-        POWERTOOLS_METRICS_NAMESPACE: car-app-metric
 
   Api:
     TracingEnabled: True
@@ -92,9 +81,7 @@ Resources:
           AttributeType: S
       KeySchema:
         - AttributeName: id
-          KeyType: HASH
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE  
+          KeyType: HASH 
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
@@ -172,19 +159,6 @@ Resources:
       Description: "Delete car"
       FunctionVersion: "2018-05-29"
       Name: "deletecar"
-      Runtime:
-        Name: APPSYNC_JS
-        RuntimeVersion: 1.0.0
-
-  GetCarByRentFunction:
-    Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
-      ApiId: !GetAtt CarApi.ApiId
-      CodeS3Location: "./src/handlers/get-car-by-rent.mjs"
-      DataSourceName: !GetAtt CarDataSource.Name
-      Description: "Get car by rent"
-      FunctionVersion: "2018-05-29"
-      Name: "getcarbyrent"
       Runtime:
         Name: APPSYNC_JS
         RuntimeVersion: 1.0.0
