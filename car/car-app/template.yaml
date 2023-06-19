@@ -1,20 +1,17 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  python-ecom-app
-
-  Sample SAM Template for python-ecom-app
+  Car Graphql API
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
-
   Api:
     TracingEnabled: True
 
 Parameters:
   Env:
     Type: String
-    Description: Environnement name
+    Description: Environment name
     Default: dev
   TechStack:
     Type: String
@@ -27,9 +24,7 @@ Parameters:
     Type: String
     Description: User pool id region
 
-
 Resources:
-
   AppSyncServiceRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -42,7 +37,6 @@ Resources:
                 - "appsync.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-
 
   CarApi:
     Type: "AWS::AppSync::GraphQLApi"
@@ -70,7 +64,7 @@ Resources:
       cfn-lint:
         config:
           ignore_checks:
-            - W3002  # allow relative path in DefinitionS3Location
+            - W3002 # allow relative path in DefinitionS3Location
 
   CarTable:
     Type: AWS::DynamoDB::Table
@@ -81,26 +75,25 @@ Resources:
           AttributeType: S
       KeySchema:
         - AttributeName: id
-          KeyType: HASH 
+          KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-           
 
   CarDataSource:
     Type: "AWS::AppSync::DataSource"
     Properties:
       ApiId: !GetAtt CarApi.ApiId
-      Name: "CarDatascource"
+      Name: "CarDatasource"
       Type: "AMAZON_DYNAMODB"
       ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
       DynamoDBConfig:
-        AwsRegion: !Ref "AWS::Region" 
+        AwsRegion: !Ref "AWS::Region"
         TableName: !Ref CarTable
 
   CreateCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/put-item.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -110,10 +103,10 @@ Resources:
       Runtime:
         Name: APPSYNC_JS
         RuntimeVersion: 1.0.0
-  
+
   UpdateCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/update-item.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -126,7 +119,7 @@ Resources:
 
   GetCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/get-by-id.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -139,7 +132,7 @@ Resources:
 
   ListCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/get-all-items.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -152,7 +145,7 @@ Resources:
 
   DeleteCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/delete-item.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -171,8 +164,8 @@ Resources:
       FieldName: "createCar"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
-        - !GetAtt CreateCarFunction.FunctionId
+        Functions:
+          - !GetAtt CreateCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
 
@@ -184,8 +177,8 @@ Resources:
       FieldName: "updateCar"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
-        - !GetAtt UpdateCarFunction.FunctionId
+        Functions:
+          - !GetAtt UpdateCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
 
@@ -197,8 +190,8 @@ Resources:
       FieldName: "getCar"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
-        - !GetAtt GetCarFunction.FunctionId
+        Functions:
+          - !GetAtt GetCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
 
@@ -210,8 +203,8 @@ Resources:
       FieldName: "getAllCars"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
-        - !GetAtt ListCarFunction.FunctionId
+        Functions:
+          - !GetAtt ListCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
 
@@ -223,24 +216,10 @@ Resources:
       FieldName: "deleteCar"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
-        - !GetAtt DeleteCarFunction.FunctionId
+        Functions:
+          - !GetAtt DeleteCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
-
-  GetCarByRentResolver:
-    Type: "AWS::AppSync::Resolver"
-    Properties:
-      ApiId: !GetAtt CarApi.ApiId
-      TypeName: "Query"
-      FieldName: "getCarByRent"
-      Kind: PIPELINE
-      PipelineConfig:
-        Functions: 
-        - !GetAtt GetCarByRentFunction.FunctionId
-      RequestMappingTemplate: "{}"
-      ResponseMappingTemplate: "$util.toJson($context.result)"
-
 
   DynamoDBPolicy:
     Type: "AWS::IAM::Policy"
@@ -255,7 +234,6 @@ Resources:
               - !GetAtt CarTable.Arn
       Roles:
         - !Ref AppSyncServiceRole
-
 # Outputs:
 #   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
 #   # Find out more about other implicit resources you can reference within SAM

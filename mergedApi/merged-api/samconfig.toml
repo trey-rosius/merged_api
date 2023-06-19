@@ -18,10 +18,10 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
 s3_prefix = "merged-api"
-region = "us-east-1"
-profile = "educloud"
+region = "us-east-2"
+profile = "default"
 image_repositories = []
-parameter_overrides = "CarApiId=\"sjnm4cm4yve6hdv77twix2p4qa\" RentApiId=\"uc3idizlkfgpvcpnuugcbdeobi\" UserPoolId=\"us-east-1_LLFLvrw8a\" UserPoolIdRegion=\"us-east-1\""
+parameter_overrides = "CarApiId=\"5ejbyfyiavg3lbkrcgfalz2hje\" RentApiId=\"gfb4mpoyunavzlmcv6iv2ngyv4\" UserPoolId=\"us-east-2_HREKK4JXw\" UserPoolIdRegion=\"us-east-2\""
 
 [default.package.parameters]
 resolve_s3 = true

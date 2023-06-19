@@ -18,10 +18,11 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
 s3_prefix = "rent-app"
-region = "us-east-1"
-profile = "educloud"
-parameter_overrides = "Env=\"dev\" TechStack=\"graphql\" UserPoolId=\"us-east-1_LLFLvrw8a\" UserPoolIdRegion=\"us-east-1\""
+region = "us-east-2"
+profile = "default"
+parameter_overrides = "Env=\"dev\" TechStack=\"graphql\" UserPoolId=\"us-east-2_HREKK4JXw\" UserPoolIdRegion=\"us-east-2\""
 image_repositories = []
+
 
 [default.package.parameters]
 resolve_s3 = true

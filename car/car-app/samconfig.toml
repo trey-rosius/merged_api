@@ -1,11 +1,12 @@
 version = 0.1
+[default]
+[default.deploy]
 [default.deploy.parameters]
-stack_name = "car-app"
-resolve_s3 = true
-s3_prefix = "car-app"
-region = "us-east-1"
-profile = "educloud"
-confirm_changeset = true
+stack_name = "carMergedApi"
+s3_prefix = "carMergedApi"
+region = "us-east-2"
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Env=\"dev\" TechStack=\"graphql\" UserPoolId=\"us-east-1_LLFLvrw8a\" UserPoolIdRegion=\"us-east-1\""
+parameter_overrides = "Env=\"stage\" TechStack=\"graphqlapi\" UserPoolId=\"us-east-2_HREKK4JXw\" UserPoolIdRegion=\"us-east-2\""
 image_repositories = []
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-w7fazjv91dr3"
+
