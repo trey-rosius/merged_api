@@ -1,16 +1,51 @@
+Applications tend to grow in direct proportion to the number of use-cases it has to support.
+In large organizations, these applications are split into smaller services and assigned to smaller independent teams to handle.
+
+Having multiple teams work on a single project means, there has to be a certain level of collaboration between said teams to guarantee a proper product.
+
+Up until May 25th 2023, clients using AWS Appysync to build GraphQL API's couldn't work independently on seperate graphql schemas, and later on merge as one API.
+
+This was because each AppSync API has a single GraphQL schema and configured data sources, resolvers, and functions.
+
+They faced challenges related to team collaboration across multiple teams and AWS accounts within an organization.
+
+For example
+
+- When multiple developer teams work on the same API without proper safeguards, it can be easy for them to accidentally make changes that break each other's code. For example, a developer in team A might push an API change that breaks functionality that team B previously implemented. This can be a major problem, as it can lead to outages, errors, and other disruptions.
+
+- One of the challenges of maintaining a GraphQL API is troubleshooting. When there is a single API, it can be difficult to determine which part of the Graph is causing the issue. This is especially true for enterprises that have multiple business domains in the same Graph. No single person can be expected to understand the entire Graph, which can make maintenance a nightmare.
+
+Some of the challenges of troubleshooting a GraphQL API:
+
+- The Graph can be very complex, making it difficult to track down the source of an issue.
+- The Graph can be shared by multiple teams, making it difficult to coordinate changes.
+- The Graph can be constantly evolving, making it difficult to keep up with the latest changes.
+
+As of the 25th of May 2023, AWS made Merged API in AWS Appsync generally available.
+
+Merged APIs enable teams to merge resources, including types, data sources, functions, and resolvers, from multiple source AppSync APIs into a single, unified AppSync endpoind.
+
+Presently,you can merge up to 10 source AppSync APIs into a Merged API.
+
+Development teams can create, update, test, and deploy their independent source APIs as part of a CI/CD pipeline.
+
+Once they have approved their changes, they can merge their changes to the Merged API endpoint in order to make them available to clients without blocking on other changes from other source APIs
+
+Execution of queries, mutations, and subscriptions on a Merged API is handled by the AppSync service, providing the same monitoring and performance experience as a source AppSync API today.
+
 # Documentation
 
 AWS AppSync is a fully managed GraphQL service that makes it easy to build scalable, secure, and serverless GraphQL APIs. AppSync provides a number of features that make it a great choice for building GraphQL APIs, including:
 
-* **Automatic schema population:** AppSync can automatically populate your schema with data from your data sources, making it easy to get started with GraphQL.
-* **Caching:** AppSync can cache your GraphQL queries and responses, which can improve performance and reduce latency.
-* **Real-time data:** AppSync can support real-time data updates, which can be useful for applications that need to keep their data up-to-date.
+- **Automatic schema population:** AppSync can automatically populate your schema with data from your data sources, making it easy to get started with GraphQL.
+- **Caching:** AppSync can cache your GraphQL queries and responses, which can improve performance and reduce latency.
+- **Real-time data:** AppSync can support real-time data updates, which can be useful for applications that need to keep their data up-to-date.
 
 In addition to these features, AppSync also recently introduced a new feature called Merged APIs. Merged APIs allow you to combine multiple AppSync APIs into a single API. This can be useful for a number of reasons, such as:
 
-* **Reduced complexity:** With Merged APIs, you can manage a single API instead of multiple APIs. This can reduce complexity and make it easier to manage your APIs.
-* **Improved performance:** Merged APIs can improve performance by reducing the number of requests that need to be made to your data sources.
-* **Increased flexibility:** Merged APIs give you more flexibility in how you architect your applications. You can use Merged APIs to combine APIs from different teams or departments, or to combine APIs that use different data sources.
+- **Reduced complexity:** With Merged APIs, you can manage a single API instead of multiple APIs. This can reduce complexity and make it easier to manage your APIs.
+- **Improved performance:** Merged APIs can improve performance by reducing the number of requests that need to be made to your data sources.
+- **Increased flexibility:** Merged APIs give you more flexibility in how you architect your applications. You can use Merged APIs to combine APIs from different teams or departments, or to combine APIs that use different data sources.
 
 To explain this, I build a website with two Appsync functions, one to manage cars and another to manage rent.
 
@@ -61,19 +96,19 @@ To create a Userpool we need to specify the name `UserPoolName`, The password po
 
 ```
   UserPool:
-    Type: AWS::Cognito::UserPool 
+    Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub userpool-app-${TechStack}-${Env}
-      Policies: 
-        PasswordPolicy: 
+      Policies:
+        PasswordPolicy:
           MinimumLength: 8
       AutoVerifiedAttributes:
         - email
-      UsernameAttributes: 
+      UsernameAttributes:
         - email
-      Schema: 
-        - AttributeDataType: String 
-          Name: email 
+      Schema:
+        - AttributeDataType: String
+          Name: email
           Required: true
         - AttributeDataType: String
           Mutable: true
@@ -102,8 +137,8 @@ Next, we need to create a Userpoolclient and associate it with the Userpool prev
 
 ```
   UserPoolClient:
-    Type: AWS::Cognito::UserPoolClient 
-    Properties: 
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
       ClientName: !Sub userpool-${TechStack}-${Env}
       UserPoolId: !Ref UserPool
       GenerateSecret: false
@@ -128,7 +163,7 @@ And then create a Userpool domain that will be associated with the Userpool
 ```
   UserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
-    Properties: 
+    Properties:
       Domain: graphqlauth-car
       UserPoolId: !Ref UserPool
 
@@ -149,7 +184,7 @@ Outputs:
   AuthUrl:
     Description: "URL used for authentication"
     Value: !Sub https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login
-  
+
   Issuer:
     Description: "Url used for issuer on HTTP API JWT tokens"
     Value: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
@@ -157,7 +192,7 @@ Outputs:
 
 ## Car API
 
-Now we are going to create a car API like for authentication , we need to create an app with `sam init`  At the top of the template file we are going to add the same configuration.
+Now we are going to create a car API like for authentication , we need to create an app with `sam init` At the top of the template file we are going to add the same configuration.
 
 ```
 AWSTemplateFormatVersion: '2010-09-09'
@@ -181,7 +216,7 @@ Globals:
 
 After that define the parameters
 
-Env :  The project environment (Dev, Prod, Staging, ... )
+Env : The project environment (Dev, Prod, Staging, ... )
 
 TechStack : In this case graphql
 
@@ -287,7 +322,7 @@ type Car @aws_cognito_user_pools @aws_api_key {
     width: Float
     price: Float
     image_uri: String
-    length: Float 
+    length: Float
     description: String
     ownerId: String
 }
@@ -336,7 +371,7 @@ After creating the API Schema next we will create the dynamodb Table with attrib
           AttributeType: S
       KeySchema:
         - AttributeName: id
-          KeyType: HASH 
+          KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
@@ -353,13 +388,13 @@ The dynamodb Datasource is associated with the API.
       Type: "AMAZON_DYNAMODB"
       ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
       DynamoDBConfig:
-        AwsRegion: !Ref "AWS::Region" 
+        AwsRegion: !Ref "AWS::Region"
         TableName: !Ref CarTable
 ```
 
 Now it's time to create our javascript resolvers. Inside the src folder create another folder name handlers. then for each mutation and query create these files. `delete-item.mjs , get-all-items.mjs , get-by-id.mjs  , put-item.mjs , update-item.mjs`
 
-In the `delete-item.mjs`  we are a javascript resolver to delete an item.
+In the `delete-item.mjs` we are a javascript resolver to delete an item.
 
 ```
 import { util } from '@aws-appsync/utils';
@@ -517,7 +552,7 @@ Each function configuration is attached to Appsync and the Datasource.
 ```
   CreateCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/put-item.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -530,7 +565,7 @@ Each function configuration is attached to Appsync and the Datasource.
 
   UpdateCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/update-item.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -543,7 +578,7 @@ Each function configuration is attached to Appsync and the Datasource.
 
   GetCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/get-by-id.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -556,7 +591,7 @@ Each function configuration is attached to Appsync and the Datasource.
 
   ListCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/get-all-items.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -569,7 +604,7 @@ Each function configuration is attached to Appsync and the Datasource.
 
   DeleteCarFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt CarApi.ApiId
       CodeS3Location: "./src/handlers/delete-item.mjs"
       DataSourceName: !GetAtt CarDataSource.Name
@@ -595,7 +630,7 @@ These functions are pipeline resolvers attached to Appsync and linked to one fie
       FieldName: "createCar"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
+        Functions:
         - !GetAtt CreateCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
@@ -608,7 +643,7 @@ These functions are pipeline resolvers attached to Appsync and linked to one fie
       FieldName: "updateCar"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
+        Functions:
         - !GetAtt UpdateCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
@@ -621,7 +656,7 @@ These functions are pipeline resolvers attached to Appsync and linked to one fie
       FieldName: "getCar"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
+        Functions:
         - !GetAtt GetCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
@@ -634,7 +669,7 @@ These functions are pipeline resolvers attached to Appsync and linked to one fie
       FieldName: "getAllCars"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
+        Functions:
         - !GetAtt ListCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
@@ -647,7 +682,7 @@ These functions are pipeline resolvers attached to Appsync and linked to one fie
       FieldName: "deleteCar"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
+        Functions:
         - !GetAtt DeleteCarFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
@@ -660,7 +695,7 @@ These functions are pipeline resolvers attached to Appsync and linked to one fie
       FieldName: "getCarByRent"
       Kind: PIPELINE
       PipelineConfig:
-        Functions: 
+        Functions:
         - !GetAtt GetCarByRentFunction.FunctionId
       RequestMappingTemplate: "{}"
       ResponseMappingTemplate: "$util.toJson($context.result)"
@@ -687,7 +722,7 @@ And then we will create the dynamoDB policy to allow Appsync to perform actions 
 
 ## Rent API
 
-Now we are going to create a rent API , we need to create an app with `sam init`  At the top of the template file we are going to add the same configuration.
+Now we are going to create a rent API , we need to create an app with `sam init` At the top of the template file we are going to add the same configuration.
 
 ```
 AWSTemplateFormatVersion: '2010-09-09'
@@ -711,7 +746,7 @@ Globals:
 
 After that define the parameters
 
-Env :  The project environment (Dev, Prod, Staging, ... )
+Env : The project environment (Dev, Prod, Staging, ... )
 
 TechStack : In this case graphql
 
@@ -780,7 +815,7 @@ schema {
 
 
 type Query {
-  
+
     getRent(id: ID!): Rent
     @aws_api_key @aws_cognito_user_pools
 
@@ -846,7 +881,7 @@ span
 
 Now it's time to create our javascript resolvers. Inside the src folder create another folder name handlers. then for each mutation and query create these files. `delete-item.mjs , get-all-items.mjs , get-by-id.mjs  , put-item.mjs , update-item.mjs`
 
-In the `delete-item.mjs`  we are a javascript resolver to delete an item.
+In the `delete-item.mjs` we are a javascript resolver to delete an item.
 
 ```
 import { util } from '@aws-appsync/utils';
@@ -1004,7 +1039,7 @@ Each function configuration is attached to Appsync and the Datasource.
 ```
   CreateRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/put-item.mjs"
       DataSourceName: !GetAtt RentDataSource.Name
@@ -1014,10 +1049,10 @@ Each function configuration is attached to Appsync and the Datasource.
       Runtime:
         Name: APPSYNC_JS
         RuntimeVersion: 1.0.0
-  
+
   UpdateRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/update-item.mjs"
       DataSourceName: !GetAtt RentDataSource.Name
@@ -1030,7 +1065,7 @@ Each function configuration is attached to Appsync and the Datasource.
 
   GetRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/get-by-id.mjs"
       DataSourceName: !GetAtt RentDataSource.Name
@@ -1043,7 +1078,7 @@ Each function configuration is attached to Appsync and the Datasource.
 
   ListRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/get-all-items.mjs"
       DataSourceName: !GetAtt RentDataSource.Name
@@ -1056,7 +1091,7 @@ Each function configuration is attached to Appsync and the Datasource.
 
   DeleteRentFunction:
     Type: AWS::AppSync::FunctionConfiguration
-    Properties: 
+    Properties:
       ApiId: !GetAtt RentApi.ApiId
       CodeS3Location: "./src/handlers/delete-item.mjs"
       DataSourceName: !GetAtt RentDataSource.Name
@@ -1192,19 +1227,19 @@ After that, we need to associate our APIs with the merged API.
 ```
   CarAPIAssociation:
     Type: AWS::AppSync::SourceApiAssociation
-    Properties: 
+    Properties:
       Description: Car api association
       MergedApiIdentifier: !GetAtt MergeAppSyncApi.ApiId
-      SourceApiAssociationConfig: 
+      SourceApiAssociationConfig:
         MergeType: AUTO_MERGE
       SourceApiIdentifier: !Ref CarApiId
 
   RentAPIAssociation:
     Type: AWS::AppSync::SourceApiAssociation
-    Properties: 
+    Properties:
       Description: Rent api association
       MergedApiIdentifier: !GetAtt MergeAppSyncApi.ApiId
-      SourceApiAssociationConfig: 
+      SourceApiAssociationConfig:
         MergeType: AUTO_MERGE
       SourceApiIdentifier: !Ref RentApiId
 ```
