@@ -1,3 +1,5 @@
+## Introduction
+
 Applications tend to grow in direct proportion to the number of use-cases it has to support.
 In large organizations, these applications are split into smaller services and assigned to smaller independent teams to handle.
 
@@ -32,6 +34,26 @@ Development teams can create, update, test, and deploy their independent source 
 Once they have approved their changes, they can merge their changes to the Merged API endpoint in order to make them available to clients without blocking on other changes from other source APIs
 
 Execution of queries, mutations, and subscriptions on a Merged API is handled by the AppSync service, providing the same monitoring and performance experience as a source AppSync API today.
+
+## Use Case
+
+For this tutorial, we'll use a car booking service, as the use case. For simplicity, let's assume we have 3 teams, handling 3 different parts(services) of the application.
+
+### User Service
+
+This service would handle everything that concerns users of the application. From authentication and authorization, to user account creation, update, delete and others.
+
+### Car Service
+
+This service would handle everything concerning cars. Like adding cars, with car details such as type, price, images, description, owner.
+
+## Rent Service
+
+This service would handle everything concerning renting out cars, date and time of rentage and returns and a lot more.
+
+## Solutions Architecture
+
+![alt text](https://raw.githubusercontent.com/trey-rosius/merged_api/master/assets/solutions_architecture.png)
 
 # Documentation
 
